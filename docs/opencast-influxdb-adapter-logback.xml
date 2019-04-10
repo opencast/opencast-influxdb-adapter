@@ -1,0 +1,30 @@
+<!--
+Configuration syntax can be found here:
+
+https://logback.qos.ch/manual/configuration.html
+-->
+<configuration
+    debug="true"
+    scan="true"
+    scanPeriod="30 seconds">
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <!-- encoders are  by default assigned the type
+         ch.qos.logback.classic.encoder.PatternLayoutEncoder -->
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+    <file>/var/log/opencast/influxdb-adapter.log</file>
+
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+
+  <root level="info">
+    <appender-ref ref="FILE"/>
+  </root>
+</configuration>
