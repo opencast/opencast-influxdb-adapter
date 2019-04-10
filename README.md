@@ -1,5 +1,7 @@
 # opencast-influxdb-adapter #
 
+[![Build Status](https://travis-ci.com/opencast/opencast-influxdb-adapter.svg?branch=master)](https://travis-ci.com/opencast/opencast-influxdb-adapter)
+
 Parse log files containing lecture views, query [Opencast](https://opencast.org) for episode metadata and push data points to [InfluxDB](https://www.influxdata.com).
 
 ## How it works ##
