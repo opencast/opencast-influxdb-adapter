@@ -34,8 +34,14 @@ public final class Util {
   private Util() {
   }
 
-  public static <T> Flowable<T> optionalToFlowable(final Optional<T> o) {
-    return o.map(Flowable::just).orElse(Flowable.empty());
+  public static <T> Flowable<T> optionalToFlowable(final Optional<? extends T> o) {
+    return nullableToFlowable(o.orElse(null));
+  }
+
+  public static <T> Flowable<T> nullableToFlowable(final T o) {
+    if (o == null)
+      return Flowable.empty();
+    return Flowable.just(o);
   }
 
   public static String basicAuthHeader(final String user, final String pw) {

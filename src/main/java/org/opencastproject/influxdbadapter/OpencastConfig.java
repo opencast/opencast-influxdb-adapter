@@ -29,12 +29,19 @@ public final class OpencastConfig {
   private final String user;
   private final String password;
   private final boolean seriesAreOptional;
+  private final int maxCacheSize;
 
-  public OpencastConfig(final String uri, final String user, final String password, final boolean seriesAreOptional) {
+  public OpencastConfig(
+          final String uri,
+          final String user,
+          final String password,
+          final boolean seriesAreOptional,
+          final int maxCacheSize) {
     this.uri = uri;
     this.user = user;
     this.password = password;
     this.seriesAreOptional = seriesAreOptional;
+    this.maxCacheSize = maxCacheSize;
   }
 
   public String getUri() {
@@ -51,5 +58,9 @@ public final class OpencastConfig {
 
   public boolean isSeriesAreOptional() {
     return this.seriesAreOptional;
+  }
+
+  public int getMaxCacheSize() {
+    return this.maxCacheSize;
   }
 }

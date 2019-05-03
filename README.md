@@ -92,6 +92,10 @@ Opencast External API login credentials, password.
 
 Set this to true if every episode must have a series assigned to it in your Opencast setup. In this case, a missing series is considered (and logged as) an error. Otherwise, it's just a normal data point.
 
+    opencast.external-api.max-cache-size=0
+
+The adapter has an optional (LRU) cache included that stores event metadata for faster retrieval. It’s evicted size-based, and you can control the maximum size with this property. Note that the special value 0 disables the cache.
+
 ## Sliding Window Mechanism ##
 
 The adapter doesn’t simply count one line of the log file as one “view” and pushes it into InfluxDB. Rather, when it keeps a cache of “current views”, which is initially empty. When it encounters a new log line, it does the following…
