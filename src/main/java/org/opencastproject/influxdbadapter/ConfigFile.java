@@ -54,7 +54,7 @@ public final class ConfigFile {
   private static final String OPENCAST_URI = "opencast.external-api.uri";
   private static final String OPENCAST_USER = "opencast.external-api.user";
   private static final String OPENCAST_PASSWORD = "opencast.external-api.password";
-  private static final String OPENCAST_MAX_CACHE_SIZE = "opencast.external-api.max-cache-size";
+  private static final String OPENCAST_EXPIRATION_DURATION = "opencast.external-api.cache-expiration-duration";
   private static final String OPENCAST_SERIES_ARE_OPTIONAL = "opencast.series-are-optional";
   private static final String LOG_FILE = "log-file";
   private static final String ADAPTER_LOG_CONFIGURATION_FILE = "adapter.log-configuration-file";
@@ -128,14 +128,19 @@ public final class ConfigFile {
     final String opencastHost = parsed.getProperty(OPENCAST_URI);
     final String opencastUser = parsed.getProperty(OPENCAST_USER);
     final String opencastPassword = parsed.getProperty(OPENCAST_PASSWORD);
-    int maxCacheSize = 0;
+    Duration opencastCacheExpirationDuration = Duration.ZERO;
     try {
-      maxCacheSize = Integer.parseInt(parsed.getProperty(OPENCAST_MAX_CACHE_SIZE, "0"));
-    } catch (final NumberFormatException e) {
+      opencastCacheExpirationDuration = Duration.parse(parsed.getProperty(OPENCAST_EXPIRATION_DURATION, "PT0M"));
+      if (opencastCacheExpirationDuration.isNegative()) {
+        LOGGER.error(
+                "Error parsing config file \"{}\": {} must be a positive ISO duration value such as \"PT5M\"",
+                p, OPENCAST_EXPIRATION_DURATION);
+        System.exit(ExitStatuses.CONFIG_FILE_PARSE_ERROR);
+      }
+    } catch (final DateTimeParseException e) {
       LOGGER.error(
-              "Error parsing config file \"{}\": {} must be a number",
-              p,
-              OPENCAST_MAX_CACHE_SIZE);
+              "Error parsing config file \"{}\": {} must be a positive ISO duration value such as \"PT5M\"",
+              p, OPENCAST_EXPIRATION_DURATION);
       System.exit(ExitStatuses.CONFIG_FILE_PARSE_ERROR);
     }
     final String opencastSeriesAreOptionalStr = parsed.getProperty(OPENCAST_SERIES_ARE_OPTIONAL);
@@ -155,7 +160,7 @@ public final class ConfigFile {
       }
     }
     final OpencastConfig opencastConfig = opencastHost != null && opencastUser != null && opencastPassword != null ?
-            new OpencastConfig(opencastHost, opencastUser, opencastPassword, opencastSeriesAreOptional, maxCacheSize) :
+            new OpencastConfig(opencastHost, opencastUser, opencastPassword, opencastSeriesAreOptional, opencastCacheExpirationDuration) :
             null;
     return new ConfigFile(new InfluxDBConfig(parsed.getProperty(INFLUXDB_URI),
                                              influxDbUser,
