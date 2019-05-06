@@ -1,0 +1,49 @@
+Copyright 2019, The Apereo Foundation
+This project includes software developed by The Apereo Foundation.
+http://www.apereo.org/
+
+
+Licensed to The Apereo Foundation under one or more contributor license
+agreements. See the NOTICE file distributed with this work for additional
+information regarding copyright ownership.
+
+
+The Apereo Foundation licenses this file to you under the Educational
+Community License, Version 2.0 (the "License"); you may not use this file
+except in compliance with the License. You may obtain a copy of the License
+at:
+
+   http://opensource.org/licenses/ecl2.txt
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
+License for the specific language governing permissions and limitations under
+the License.
+
+List of Included Third-Party Dependencies
+-----------------------------------------
+
+None
+
+List of Third-Party Dependencies Included with Maven
+----------------------------------------------------
+
+GroupId                                ArtifactId                                       License
+ch.qos.logback                         logback-classic                                  EPL 1.0
+ch.qos.logback                         logback-core                                     EPL 1.0
+com.github.davidmoten                  rxjava2-file                                     Apache 2.0
+com.github.devcsrj                     slf4j-okhttp3-logging-interceptor                Apache 2.0
+com.google.code.gson                   gson                                             Apache 2.0
+com.squareup.retrofit2                 adapter-rxjava2                                  Apache 2.0
+com.squareup.retrofit2                 retrofix                                         Apache 2.0
+commons-cli                            commons-cli                                      Apache 2.0
+io.reactivex.rxjava2                   rxjava                                           Apache 2.0
+net.jqwik                              jqwik                                            EPL 2.0
+org.assertj                            assertj-core                                     Apache 2.0
+org.influxdb                           influxdb-java                                    MIT
+org.junit.jupiter                      junit-jupiter-api                                EPL 2.0
+org.junit.jupiter                      junit-jupiter-engine                             EPL 2.0
+org.pcollections                       org.pcollections                                 MIT
+org.slf4j                              slf4j-api                                        MIT
+
