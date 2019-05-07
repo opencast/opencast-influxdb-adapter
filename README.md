@@ -4,6 +4,12 @@
 
 Parse log files containing lecture views, query [Opencast](https://opencast.org) for episode metadata and push data points to [InfluxDB](https://www.influxdata.com).
 
+## Release Model and Versioning ##
+
+The project has regular releases. If you want to report a bug or request a feature, please open an issue here on Github. If you want to incorporate changes, open a pull request and target the `master` branch.
+
+To keep things simple, the version number only consists of major and minor version. The major version number increases when configuration changes are necessary, or the behavior changes significantly. Smaller fixes or additions only affect the minor version number.
+
 ## How it works ##
 
 When started, the adapter will read lines from a log file specified in the adapter’s configuration file. By default, it will only read and process lines that are appended to this file after the adapter was started. However, using a command line parameter (see below), you can start reading the file from its beginning. The adapter will respect log rotations.
