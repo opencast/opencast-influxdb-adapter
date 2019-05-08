@@ -98,9 +98,9 @@ Opencast External API login credentials, password.
 
 Set this to true if every episode must have a series assigned to it in your Opencast setup. In this case, a missing series is considered (and logged as) an error. Otherwise, it's just a normal data point.
 
-    opencast.external-api.max-cache-size=0
+    opencast.external-api.cache-expiration-duration=PT0M
 
-The adapter has an optional (LRU) cache included that stores event metadata for faster retrieval. It’s evicted size-based, and you can control the maximum size with this property. Note that the special value 0 disables the cache.
+The adapter has an optional cache included that stores event metadata for faster retrieval. It’s evicted time-based, and you can control the time after a cache entry has been *written* that it is evicted again. Note that the special value `PT0M` (or any duration that equates to zero) disables the cache.
 
 ## Sliding Window Mechanism ##
 

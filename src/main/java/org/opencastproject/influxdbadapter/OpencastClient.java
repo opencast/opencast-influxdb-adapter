@@ -83,8 +83,8 @@ public final class OpencastClient {
     this.clients = new HashMap<>();
     final Interceptor interceptor = new HttpLoggingInterceptor();
     this.client = new OkHttpClient.Builder().addInterceptor(interceptor).build();
-    this.cache = opencastConfig != null && opencastConfig.getMaxCacheSize() > 0 ?
-            CacheBuilder.newBuilder().maximumSize(opencastConfig.getMaxCacheSize()).build() :
+    this.cache = opencastConfig != null && !opencastConfig.getCacheExpirationDuration().isZero() ?
+            CacheBuilder.newBuilder().expireAfterWrite(opencastConfig.getCacheExpirationDuration()).build() :
             null;
   }
 
