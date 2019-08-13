@@ -106,12 +106,19 @@ public final class LogLine {
    * @return Either an empty <code>Flowable</code> or a singleton
    */
   public Flowable<RawImpression> toRawImpression(
-          final Collection<String> invalidAgents, final Collection<String> validExtensions) {
-    if (this.returnCode / 200 != 1 || !validExtensions.isEmpty() && validExtensions
-            .stream()
-            .noneMatch(this.request::contains))
+          final Collection<String> invalidAgents,
+          final Collection<String> validExtensions,
+          final Collection<String> invalidPublications) {
+    if (this.returnCode / 200 != 1)
       return Flowable.empty();
-
+    if (!validExtensions.isEmpty() && validExtensions.stream().noneMatch(this.request::contains))
+      return Flowable.empty();
+    if (!invalidPublications.isEmpty() && this.requestLine
+            .map(RequestLine::getPublicationChannel)
+            .map(p -> invalidPublications.stream().anyMatch(ip -> ip.equals(p)))
+            .orElse(Boolean.FALSE)) {
+      return Flowable.empty();
+    }
     return Util.optionalToFlowable(this.requestLine).flatMap(rl -> {
       if (!rl.getMethod().equals("GET") || invalidAgent(invalidAgents))
         return Flowable.empty();

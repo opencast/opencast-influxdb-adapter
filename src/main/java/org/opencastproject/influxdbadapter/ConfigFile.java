@@ -61,6 +61,7 @@ public final class ConfigFile {
   private static final String ADAPTER_VIEW_INTERVAL = "adapter.view-interval-iso-duration";
   private static final String ADAPTER_INVALID_USER_AGENTS = "adapter.invalid-user-agents";
   private static final String ADAPTER_VALID_FILE_EXTENSIONS = "adapter.valid-file-extensions";
+  private static final String ADAPTER_INVALID_PUBLICATION_CHANNELS = "adapter.invalid-publication-channels";
 
   private final InfluxDBConfig influxDBConfig;
   private final OpencastConfig opencastConfig;
@@ -69,6 +70,7 @@ public final class ConfigFile {
   private final Path logConfigurationFile;
   private final Set<String> invalidUserAgents;
   private final Set<String> validFileExtensions;
+  private final Set<String> invalidPublicationChannels;
 
   private ConfigFile(
           final InfluxDBConfig influxDBConfig,
@@ -77,7 +79,8 @@ public final class ConfigFile {
           final Duration viewInterval,
           final Path logConfigurationFile,
           final Set<String> invalidUserAgents,
-          final Set<String> validFileExtensions) {
+          final Set<String> validFileExtensions,
+          final Set<String> invalidPublicationChannels) {
     this.influxDBConfig = influxDBConfig;
     this.opencastConfig = opencastConfig;
     this.logFile = logFile;
@@ -85,6 +88,7 @@ public final class ConfigFile {
     this.logConfigurationFile = logConfigurationFile;
     this.invalidUserAgents = invalidUserAgents;
     this.validFileExtensions = validFileExtensions;
+    this.invalidPublicationChannels = invalidPublicationChannels;
   }
 
   private static Set<String> propertySet(final String propertyName, final Properties properties) {
@@ -173,7 +177,8 @@ public final class ConfigFile {
                           viewDuration,
                           logConfigurationFile != null ? Paths.get(logConfigurationFile) : null,
                           propertySet(ADAPTER_INVALID_USER_AGENTS, parsed),
-                          propertySet(ADAPTER_VALID_FILE_EXTENSIONS, parsed));
+                          propertySet(ADAPTER_VALID_FILE_EXTENSIONS, parsed),
+                          propertySet(ADAPTER_INVALID_PUBLICATION_CHANNELS, parsed));
   }
 
   public InfluxDBConfig getInfluxDBConfig() {
@@ -202,5 +207,9 @@ public final class ConfigFile {
 
   public Set<String> getValidFileExtensions() {
     return this.validFileExtensions;
+  }
+
+  public Set<String> getInvalidPublicationChannels() {
+    return this.invalidPublicationChannels;
   }
 }
