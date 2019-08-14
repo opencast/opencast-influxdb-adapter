@@ -82,6 +82,10 @@ A comma-separated list of strings that must not be contained in the `User-Agent`
 
 A comma-separated list of valid file extensions (note that it has to contain the period). Can be empty, in which case the extension is not a filter criterion.
 
+    adapter.invalid-publication-channels=internal
+
+A comma-separated list of invalid publication channels. Can be empty, in which case the publication channel is not a filter criterion.
+
     opencast.external-api.uri=https://{organization}.api.opencast.com
 
 The (External API) URI the adapter connects to to find out an episode’s metadata. If you have a multi-organization installation, you can use the placeholder `{organization}` in the URI. Otherwise, leave it out.
