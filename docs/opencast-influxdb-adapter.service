@@ -4,7 +4,7 @@ After=syslog.target
 
 [Service]
 SyslogIdentifier=opencast-influxdb-adapter
-ExecStart=/usr/bin/java -jar /opt/opencast-influxdb-adapter/opencast-influxdb-adapter-1.0.jar
+ExecStart=/usr/bin/java -jar /opt/opencast-influxdb-adapter/opencast-influxdb-adapter-2.0.jar
 Type=simple
 Restart=on-failure
 RestartSec=10
