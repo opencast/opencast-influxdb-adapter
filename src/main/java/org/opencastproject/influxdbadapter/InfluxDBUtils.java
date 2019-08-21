@@ -23,7 +23,9 @@ package org.opencastproject.influxdbadapter;
 
 import org.influxdb.InfluxDB;
 import org.influxdb.InfluxDBFactory;
+import org.influxdb.InfluxDBIOException;
 import org.influxdb.dto.Point;
+import org.influxdb.dto.Pong;
 import org.slf4j.LoggerFactory;
 
 /**
@@ -42,6 +44,14 @@ public final class InfluxDBUtils {
    * @param p The point to write
    */
   public static void writePointToInflux(final InfluxDBConfig config, final InfluxDB influxDB, final Point p) {
+    try {
+      final Pong pong = influxDB.ping();
+      if (!pong.isGood()) {
+        LOGGER.error("INFLUXPINGERROR, not good");
+      }
+    } catch (final InfluxDBIOException e) {
+      LOGGER.error("INFLUXPINGERROR, {}", e.getMessage());
+    }
     if (config.getRetentionPolicy() != null)
       influxDB.write(config.getDb(), config.getRetentionPolicy(), p);
     else
