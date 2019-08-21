@@ -24,6 +24,7 @@ package org.opencastproject.influxdbadapter;
 import org.pcollections.HashPMap;
 import org.pcollections.HashTreePSet;
 import org.pcollections.MapPSet;
+import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -35,6 +36,8 @@ import io.reactivex.functions.BiFunction;
  * Utilities concerning the sliding window mechanism
  */
 public final class TimeCachingUtils {
+  private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(TimeCachingUtils.class);
+
   private TimeCachingUtils() {
   }
 
@@ -53,10 +56,17 @@ public final class TimeCachingUtils {
     HashPMap<RawImpression, Instant> newImpressions = prior.getImpressions();
     MapPSet<RawImpression> newEvictions = HashTreePSet.empty();
     for (final Map.Entry<RawImpression, Instant> e : prior.getImpressions().entrySet()) {
-      if (Duration.between(e.getValue(), rawImpression.getDate()).compareTo(viewInterval) >= 0) {
+      final Duration between = Duration.between(e.getValue(), rawImpression.getDate());
+      if (between.compareTo(viewInterval) >= 0) {
+        LOGGER.debug("EVICT, entry {} old: {}", between, e.getKey().getOrigin());
         newImpressions = newImpressions.minus(e.getKey());
         newEvictions = newEvictions.plus(e.getKey());
       }
+    }
+    if (prior.getImpressions().containsKey(rawImpression) && newImpressions.containsKey(rawImpression)) {
+      LOGGER.debug("UPDATETIME: {}", rawImpression.getOrigin());
+    } else {
+      LOGGER.debug("ADD: {}", rawImpression.getOrigin());
     }
     newImpressions = newImpressions.plus(rawImpression, rawImpression.getDate().toInstant());
     return new Cache(newImpressions, newEvictions);

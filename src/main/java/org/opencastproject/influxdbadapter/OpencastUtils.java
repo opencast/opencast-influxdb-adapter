@@ -80,13 +80,13 @@ public final class OpencastUtils {
     logger.info("Retrieving series for organization \"{}\", episode \"{}\"...", organization, episodeId);
     return client
             .getRequest(organization, episodeId)
-            .concatMap(OpencastUtils::checkResponseCode)
+            .concatMap(body -> OpencastUtils.checkResponseCode(logger, body, organization, episodeId))
             .map(OpencastUtils::seriesForEventJson)
             .concatMap(series -> {
               if (series.isPresent())
                 return Flowable.just(series.get());
               if (!seriesAreOptional)
-                logger.error("episode \"{}\" for organization \"{}\" has no series", episodeId, organization);
+                logger.error("OCNOSERIES, episode \"{}\", organization \"{}\"", episodeId, organization);
               return Flowable.just("");
             });
   }
@@ -95,12 +95,23 @@ public final class OpencastUtils {
    * Filter out invalid HTTP requests
    *
    * @param x The HTTP response we got
+   * @param logger Logger for errors
    * @return An empty <code>Flowable</code> if it's an invalid HTTP response, or a singleton <code>Flowable</code> containing the body as a string
    */
-  private static Flowable<String> checkResponseCode(final Response<? extends ResponseBody> x) {
-    return x.code() / 200 != 1 ?
-            Flowable.error(new InvalidOpencastResponse(x.code())) :
-            Flowable.fromCallable(() -> Objects.requireNonNull(x.body()).string());
+  private static Flowable<String> checkResponseCode(
+          final Logger logger,
+          final Response<? extends ResponseBody> x,
+          final String organization,
+          final String episodeId) {
+    final boolean correctResponse = x.code() / 200 == 1;
+    if (!correctResponse) {
+      logger.error("OCHTTPERROR, episode {}, organization {}: code, {}", x.code(), episodeId, organization);
+    } else {
+      logger.debug("OCHTTPSUCCESS, episode {}, organization {}", episodeId, organization);
+    }
+    return correctResponse ?
+            Flowable.fromCallable(() -> Objects.requireNonNull(x.body()).string()) :
+            Flowable.error(new InvalidOpencastResponse(x.code()));
   }
 
   /**

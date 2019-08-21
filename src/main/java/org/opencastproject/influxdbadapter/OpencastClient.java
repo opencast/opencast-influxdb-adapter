@@ -24,6 +24,8 @@ package org.opencastproject.influxdbadapter;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 
+import org.slf4j.LoggerFactory;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -41,6 +43,8 @@ import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
  * Manages Opencast's External API endpoint
  */
 public final class OpencastClient {
+  private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(OpencastClient.class);
+
   private static final String ORGANIZATION = "{organization}";
 
   public static final class CacheKey {
@@ -137,15 +141,25 @@ public final class OpencastClient {
       return requestUncached;
     final CacheKey cacheKey = new CacheKey(organization, episodeId);
     return Flowable.concat(Util.nullableToFlowable(this.cache.getIfPresent(cacheKey)),
-                           requestUncached.doOnNext(response -> addToCache(cacheKey, response)));
+                           requestUncached.doOnNext(response -> addToCache(cacheKey,
+                                                                           response,
+                                                                           organization,
+                                                                           episodeId)));
   }
 
-  private void addToCache(final CacheKey cacheKey, final Response<ResponseBody> response) {
-    if (response.isSuccessful())
+  private void addToCache(
+          final CacheKey cacheKey,
+          final Response<ResponseBody> response,
+          final String organization,
+          final String episodeId) {
+    if (response.isSuccessful()) {
+      LOGGER.debug("OCCACHEADD, episode {}, organization {}", episodeId, organization);
       this.cache.put(cacheKey, response);
+    }
   }
 
   private Flowable<Response<ResponseBody>> getRequestUncached(final String organization, final String episodeId) {
+    LOGGER.debug("OCREQUESTSTART, episode {}, organization {}", episodeId, organization);
     return getClient(organization).getEvent(episodeId, getAuthHeader());
   }
 

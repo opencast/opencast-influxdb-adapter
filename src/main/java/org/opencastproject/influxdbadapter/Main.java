@@ -68,7 +68,9 @@ public final class Main {
             // Parse the line into Java code
             .concatMap(LogLine::fromLine)
             // Filter the log line and extract "interesting information"
-            .concatMap(x -> x.toRawImpression(configFile.getInvalidUserAgents(), configFile.getValidFileExtensions(), configFile.getInvalidPublicationChannels()))
+            .concatMap(x -> x.toRawImpression(configFile.getInvalidUserAgents(),
+                                              configFile.getValidFileExtensions(),
+                                              configFile.getInvalidPublicationChannels()))
             // Filter the parsed structure using the sliding window mechanism
             .scan(Cache.empty(), TimeCachingUtils.cacheScanner(configFile.getViewInterval()))
             .concatMap(c -> Flowable.fromIterable(c.getEvictions()))

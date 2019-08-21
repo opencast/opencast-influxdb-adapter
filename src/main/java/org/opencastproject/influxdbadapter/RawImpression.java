@@ -28,19 +28,21 @@ import java.util.Objects;
  * Represents a "parsed" version of a {@link LogLine}, still lacking metadata (immutable)
  */
 public final class RawImpression {
+  private final LogLine originalLine;
   private final String episodeId;
   private final String organizationId;
   private final String publicationChannel;
   private final OffsetDateTime date;
   private final String ip;
-  private String publicationChannelId;
 
   public RawImpression(
+          final LogLine originalLine,
           final String episodeId,
           final String organizationId,
           final String publicationChannel,
           final OffsetDateTime date,
           final String ip) {
+    this.originalLine = originalLine;
     this.episodeId = episodeId;
     this.organizationId = organizationId;
     this.publicationChannel = publicationChannel;
@@ -104,7 +106,11 @@ public final class RawImpression {
     return this.ip;
   }
 
-  public String getPublicationChannelId() {
-    return this.publicationChannelId;
+  public CharSequence getOrigin() {
+    return this.originalLine.getOrigin();
+  }
+
+  public String getPublicationChannel() {
+    return this.publicationChannel;
   }
 }

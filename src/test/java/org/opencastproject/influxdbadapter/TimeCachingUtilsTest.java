@@ -40,6 +40,7 @@ import java.time.temporal.TemporalAmount;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import io.reactivex.functions.BiFunction;
@@ -50,6 +51,16 @@ import io.reactivex.functions.BiFunction;
  * <p>For an introduction to property-based testing, see https://jqwik.net/</p>
  */
 class TimeCachingUtilsTest {
+  private static final LogLine DUMMY_LOG_LINE = new LogLine("origin",
+                                                            "ip",
+                                                            OffsetDateTime.now(),
+                                                            "request",
+                                                            200,
+                                                            "unknown",
+                                                            "referrer",
+                                                            "agent",
+                                                            Optional.empty());
+
   // Generate a random list of raw impression
   @Provide
   SizableArbitrary<List<RawImpression>> rawImpressionList() {
@@ -76,7 +87,13 @@ class TimeCachingUtilsTest {
     final Arbitrary<String> ips = Arbitraries.strings().ofLength(1).withCharRange('a', 'z').map(ip -> "ip" + ip);
     return episodeIds
             .flatMap(episodeId -> organizationIds.flatMap(organizationId -> channelIds.flatMap(channelId -> times.flatMap(
-                    time -> ips.map(ip -> new RawImpression(episodeId, organizationId, channelId, time, ip))))))
+                    time -> ips.map(ip -> new RawImpression(
+                            DUMMY_LOG_LINE,
+                            episodeId,
+                            organizationId,
+                            channelId,
+                            time,
+                            ip))))))
             .list();
   }
 
@@ -101,9 +118,10 @@ class TimeCachingUtilsTest {
     final List<RawImpression> evictions = runCache(rawImpressions, interval);
     final List<RawImpression> movedImpressions = rawImpressions
             .stream()
-            .map(ri -> new RawImpression(ri.getEpisodeId(),
+            .map(ri -> new RawImpression(DUMMY_LOG_LINE,
+                                         ri.getEpisodeId(),
                                          ri.getOrganizationId(),
-                                         ri.getPublicationChannelId(),
+                                         ri.getPublicationChannel(),
                                          ri.getDate().plus(addition),
                                          ri.getIp()))
             .collect(Collectors.toList());
