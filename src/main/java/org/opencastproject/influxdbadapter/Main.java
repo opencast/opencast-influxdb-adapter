@@ -27,7 +27,6 @@ import org.influxdb.InfluxDB;
 import org.influxdb.InfluxDBIOException;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -98,15 +97,9 @@ public final class Main {
       final OpencastClient ocClient = new OpencastClient(configFile.getOpencastConfig());
 
       // Possibly read the given log file from the beginning.
-      if (commandLine.isFromBeginning()) {
-        try (final BufferedReader br = java.nio.file.Files.newBufferedReader(configFile.getLogFile())) {
-          processLines(configFile, ocClient, influxDB, Flowable.fromIterable(br.lines()::iterator));
-          LOGGER.info("Processed all log lines successfully");
-        } catch (final IOException e) {
-          LOGGER.error("Error reading \"" + configFile.getLogFile() + "\": " + e.getMessage());
-          System.exit(ExitStatuses.LOG_FILE_BATCH_READ_ERROR);
-        }
-      }
+      final long startPosition = commandLine.isFromBeginning()
+              ? 0
+              : configFile.getLogFile().toFile().length();
 
       // Tail and process the log lines
       processLines(configFile,
@@ -114,7 +107,8 @@ public final class Main {
                    influxDB,
                    Files
                            .tailLines(configFile.getLogFile().toString())
-                           .blocking()
+                           .nonBlocking()
+                           .startPosition(startPosition)
                            .backpressureStrategy(BackpressureStrategy.BUFFER)
                            .build());
     } catch (final OpencastClientConfigurationException e) {
