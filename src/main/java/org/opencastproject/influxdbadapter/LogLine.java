@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collection;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -49,7 +50,8 @@ public final class LogLine {
           "^(?<ip>(?:[0-9]{1,3}\\.){3}[0-9]{1,3}) - - \\[(?<date>[^]]+)] \"(?<request>[^\"]*)\" (?<httpret>[0-9]+) (?<unknown1>(?:[0-9]+|-)) \"(?<referrer>[^\"]*)\" \"(?<agent>[^\"]+)\"");
 
   // Example: 10/Feb/2019:03:38:22 +0100
-  private static final DateTimeFormatter LOG_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd/MMM/yyyy:HH:mm:ss Z");
+  private static final DateTimeFormatter LOG_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd/MMM/yyyy:HH:mm:ss Z")
+                                                                               .withLocale(Locale.ENGLISH);
 
   private final CharSequence origin;
   private final String ip;
