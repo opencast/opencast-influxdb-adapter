@@ -92,7 +92,7 @@ public final class Main {
     final CommandLine commandLine = CommandLine.parse(args);
     final ConfigFile configFile = ConfigFile.readFile(commandLine.getConfigFile());
     configureLog(configFile);
-    LOGGER.info("logging configured");
+    LOGGER.info("Logging configured");
     // Connect and configure InfluxDB
     try (final InfluxDB influxDB = InfluxDBUtils.connect(configFile.getInfluxDBConfig())) {
       // Create an Opencast HTTP client (this might be a nop, if no Opencast credentials are given)
@@ -114,7 +114,7 @@ public final class Main {
                            .backpressureStrategy(BackpressureStrategy.BUFFER)
                            .build());
     } catch (final OpencastClientConfigurationException e) {
-      LOGGER.error(e.getMessage());
+      LOGGER.error("Opencast configuration error: ", e);
       System.exit(ExitStatuses.OPENCAST_CLIENT_CONFIGURATION_ERROR);
     } catch (final InfluxDBIOException e) {
       if (e.getCause() != null) {
@@ -174,7 +174,7 @@ public final class Main {
       configurator.setContext(loggerContext);
       configurator.doConfigure(configStream);
     } catch (final IOException | JoranException e) {
-      LOGGER.error("couldn't load log configuration file \"{}\": {}", e.getMessage(), logConfigurationFile);
+      LOGGER.error("Couldn't load logger configuration file \"{}\":", logConfigurationFile, e);
       System.exit(ExitStatuses.LOG_FILE_CONFIGURATION_ERROR);
     }
     // This is logback being weird, see the official docs for an "explanation".
@@ -188,16 +188,16 @@ public final class Main {
    */
   private static void processError(final Throwable e) {
     if (e instanceof FileNotFoundException) {
-      LOGGER.error("Log file \"" + e.getMessage() + "\" not found");
+      LOGGER.error("Log file \"" + e.getMessage() + "\" not found", e);
       System.exit(ExitStatuses.LOG_FILE_NOT_FOUND);
     } else if (e instanceof OurJsonSyntaxException) {
-      LOGGER.error("couldn't parse Opencast's json: " + ((OurJsonSyntaxException) e).getJson());
+      LOGGER.error("Couldn't parse Opencast's json: " + ((OurJsonSyntaxException) e).getJson(), e);
       System.exit(ExitStatuses.OPENCAST_JSON_SYNTAX_ERROR);
     } else if (e instanceof OpencastClientConfigurationException) {
-      LOGGER.error(e.getMessage());
+      LOGGER.error("Opencast configuration error:", e);
       System.exit(ExitStatuses.OPENCAST_CLIENT_CONFIGURATION_ERROR);
     } else {
-      LOGGER.error("Error: " + e.getMessage());
+      LOGGER.error("Error:", e);
     }
     System.exit(ExitStatuses.UNKNOWN);
   }
