@@ -51,11 +51,13 @@ public final class OpencastUtils {
   private static Optional<String> seriesForEventJson(final String eventJson) {
     try {
       final Map<String, Object> m = new Gson().fromJson(eventJson, Map.class);
-      final Object isPartOf = m.get("is_part_of");
-      if (!(isPartOf instanceof String)) {
-        return Optional.empty();
+      if (m != null) {
+        final Object isPartOf = m.get("is_part_of");
+        if (isPartOf instanceof String) {
+          return Optional.of((String) isPartOf);
+        }
       }
-      return Optional.of((String) isPartOf);
+      return Optional.empty();
     } catch (final JsonSyntaxException e) {
       throw new OurJsonSyntaxException(eventJson);
     }
