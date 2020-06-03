@@ -32,7 +32,7 @@ import java.util.regex.Pattern;
  */
 public final class RequestLine {
   private static final Pattern REQUEST_PARSER = Pattern.compile(
-          "(?<method>[^ ]+) /(?<organizationid>[^/]+)/(?<publicationchannel>[^/]+)/(?<episodeid>[^/]+)/(?<assetid>[^/]+).*");
+          "^(?<method>[^ ]+) /(?<organizationid>[^/]+)/(?<publicationchannel>[^/]+)/(?<episodeid>[^/]+)/(?<assetid>[^/]+)/[^/ ]+ .+$");
 
   private final String method;
   private final String organizationId;
