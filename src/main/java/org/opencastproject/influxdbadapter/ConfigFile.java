@@ -23,6 +23,7 @@ package org.opencastproject.influxdbadapter;
 
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -33,8 +34,10 @@ import java.time.format.DateTimeParseException;
 import java.util.Collections;
 import java.util.Properties;
 import java.util.Set;
+import java.util.UUID;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
 
 /**
  * Represents all options that can are contained in the configuration file (immutable)
@@ -55,6 +58,8 @@ public final class ConfigFile {
   private static final String OPENCAST_USER = "opencast.external-api.user";
   private static final String OPENCAST_PASSWORD = "opencast.external-api.password";
   private static final String OPENCAST_EXPIRATION_DURATION = "opencast.external-api.cache-expiration-duration";
+  private static final String OPENCAST_CACHE_SIZE = "opencast.external-api.cache-size";
+  private static final String OPENCAST_CACHE_DIR = "opencast.external-api.cache-dir";
   private static final String OPENCAST_SERIES_ARE_OPTIONAL = "opencast.series-are-optional";
   private static final String LOG_FILE = "log-file";
   private static final String ADAPTER_LOG_CONFIGURATION_FILE = "adapter.log-configuration-file";
@@ -163,8 +168,25 @@ public final class ConfigFile {
         System.exit(ExitStatuses.CONFIG_FILE_PARSE_ERROR);
       }
     }
+
+    File cacheDir = new File(System.getProperty("java.io.tmpdir"), UUID.randomUUID().toString());
+    final String opencastCacheDir = parsed.getProperty(OPENCAST_CACHE_DIR);
+    if (opencastCacheDir != null) {
+      cacheDir = new File(opencastCacheDir);
+    }
+
+    long cacheSize = Long.valueOf(parsed.getProperty(OPENCAST_CACHE_SIZE,"10")) * 1024 * 1024;
+
+    if (!opencastCacheExpirationDuration.isZero()) {
+      LOGGER.info("Configured Opencast external API cache at \"{}\" with max size {} Byte", cacheDir, cacheSize);
+    } else {
+      LOGGER.info("Opencast external API cache disabled");
+    }
+
     final OpencastConfig opencastConfig = opencastHost != null && opencastUser != null && opencastPassword != null ?
-            new OpencastConfig(opencastHost, opencastUser, opencastPassword, opencastSeriesAreOptional, opencastCacheExpirationDuration) :
+            new OpencastConfig(opencastHost, opencastUser, opencastPassword, opencastSeriesAreOptional,
+                    opencastCacheExpirationDuration,
+                    cacheDir,cacheSize) :
             null;
     return new ConfigFile(new InfluxDBConfig(parsed.getProperty(INFLUXDB_URI),
                                              influxDbUser,
