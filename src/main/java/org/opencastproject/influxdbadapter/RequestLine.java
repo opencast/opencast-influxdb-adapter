@@ -21,9 +21,11 @@
 
 package org.opencastproject.influxdbadapter;
 
+import org.slf4j.LoggerFactory;
+
 import java.util.Optional;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
 
 /**
  * Represents the request line portion of the a log line (immutable)
@@ -31,8 +33,9 @@ import java.util.regex.Pattern;
  * <p>This class cannot be constructed directly, see the <code>parseLine</code> method.</p>
  */
 public final class RequestLine {
-  private static final Pattern REQUEST_PARSER = Pattern.compile(
-          "^(?<method>[^ ]+) /(?<organizationid>[^/]+)/(?<publicationchannel>[^/]+)/(?<episodeid>[^/]+)/(?<assetid>[^/]+)/[^/ ]+ .+$");
+  private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(RequestLine.class);
+
+  private static RequestLineConfiguration requestLineConfiguration = null;
 
   private final String method;
   private final String organizationId;
@@ -55,16 +58,22 @@ public final class RequestLine {
     this.assetId = assetId;
   }
 
-  /**
+  /**  private static final Pattern REQUEST_PARSER = Main.getConfigFile().getHttpRequestLinePattern();
+
    * Create a request line from a given line
    *
    * @param line A given request line
    * @return <code>of(line)</code> if the line was parsed successfully, else <code>empty()</code>
    */
   public static Optional<RequestLine> parseLine(final CharSequence line) {
-    final Matcher m = REQUEST_PARSER.matcher(line);
-    if (!m.matches())
+    if (requestLineConfiguration == null) {
+      throw new ConfigurationException("Configuration not set. Abort.");
+    }
+    final Matcher m = requestLineConfiguration.getPattern().matcher(line);
+    if (!m.matches()) {
+      LOGGER.debug("SKIP REQUEST, wrong request pattern: {}", line);
       return Optional.empty();
+    }
     return Optional.of(new RequestLine(
             m.group("method"),
             m.group("organizationid"),
@@ -93,5 +102,9 @@ public final class RequestLine {
   @SuppressWarnings("unused")
   public String getAssetId() {
     return this.assetId;
+  }
+
+  public static void setRequestLineConfiguration(RequestLineConfiguration requestLineConfiguration) {
+    RequestLine.requestLineConfiguration = requestLineConfiguration;
   }
 }

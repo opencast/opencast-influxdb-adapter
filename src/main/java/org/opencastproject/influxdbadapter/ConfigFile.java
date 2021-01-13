@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Collections;
 import java.util.Properties;
@@ -58,6 +59,9 @@ public final class ConfigFile {
   private static final String OPENCAST_SERIES_ARE_OPTIONAL = "opencast.series-are-optional";
   private static final String LOG_FILE = "log-file";
   private static final String ADAPTER_LOG_CONFIGURATION_FILE = "adapter.log-configuration-file";
+  private static final String HTTPD_LOG_LINE_PATTERN = "adapter.httpd.logline-regex";
+  private static final String HTTPD_REQUESTLINE_PATTERN = "adapter.httpd.requestline-regex";
+  private static final String HTTPD_DATETIME_PATTERN = "adapter.httpd.datetime-format";
   private static final String ADAPTER_VIEW_INTERVAL = "adapter.view-interval-iso-duration";
   private static final String ADAPTER_INVALID_USER_AGENTS = "adapter.invalid-user-agents";
   private static final String ADAPTER_VALID_FILE_EXTENSIONS = "adapter.valid-file-extensions";
@@ -71,6 +75,9 @@ public final class ConfigFile {
   private final Set<String> invalidUserAgents;
   private final Set<String> validFileExtensions;
   private final Set<String> invalidPublicationChannels;
+  private final Pattern httpLogLinePattern;
+  private final Pattern httpRequestLinePattern;
+  private final String httpDateTimePattern;
 
   private ConfigFile(
           final InfluxDBConfig influxDBConfig,
@@ -80,7 +87,11 @@ public final class ConfigFile {
           final Path logConfigurationFile,
           final Set<String> invalidUserAgents,
           final Set<String> validFileExtensions,
-          final Set<String> invalidPublicationChannels) {
+          final Set<String> invalidPublicationChannels,
+          final Pattern httpLogLinePattern,
+          final Pattern httpRequestLinePattern,
+          final String httpDateTimePattern
+          ) {
     this.influxDBConfig = influxDBConfig;
     this.opencastConfig = opencastConfig;
     this.logFile = logFile;
@@ -89,6 +100,10 @@ public final class ConfigFile {
     this.invalidUserAgents = invalidUserAgents;
     this.validFileExtensions = validFileExtensions;
     this.invalidPublicationChannels = invalidPublicationChannels;
+    this.httpLogLinePattern = httpLogLinePattern;
+    this.httpRequestLinePattern = httpRequestLinePattern;
+    this.httpDateTimePattern = httpDateTimePattern;
+
   }
 
   private static Set<String> propertySet(final String propertyName, final Properties properties) {
@@ -120,6 +135,46 @@ public final class ConfigFile {
       System.exit(ExitStatuses.CONFIG_FILE_PARSE_ERROR);
     }
     final String logConfigurationFile = parsed.getProperty(ADAPTER_LOG_CONFIGURATION_FILE);
+
+    String httpLogLineRegex = parsed.getProperty(HTTPD_LOG_LINE_PATTERN);
+
+    if (httpLogLineRegex == null) {
+      httpLogLineRegex = "^(?<ip>(?:[0-9]{1,3}\\.){3}[0-9]{1,3}) - (-|[^ ]+) \\[(?<date>[^]]+)] \"(?<request>[^\"]*)\" (?<httpret>[0-9]+) (?<unknown1>(?:[0-9]+|-)) \"(?<referrer>[^\"]*)\" \"(?<agent>[^\"]+)\"";
+    }
+    Pattern httpLogLinePattern = null;
+
+    String httpDateTimeFormat = parsed.getProperty(HTTPD_DATETIME_PATTERN);
+
+    if (httpDateTimeFormat == null) {
+      httpDateTimeFormat = "dd/MMM/yyyy:HH:mm:ss Z";
+    }
+    String httpDateTimePattern = null;
+    try {
+        LOGGER.info("Using \"{}\" as pattern", httpLogLineRegex);
+        httpLogLinePattern = Pattern.compile(httpLogLineRegex);
+        LOGGER.info("Using \"{}\" as format", httpDateTimeFormat);
+        httpDateTimePattern = httpDateTimeFormat;
+        LogLine.setLogLineConfiguration(new LogLineConfiguration(httpLogLinePattern, DateTimeFormatter.ofPattern(httpDateTimePattern)));
+    } catch (Exception e) {
+        LOGGER.error("Error parsing {} \"{}\" {} \"{}\": {}",  HTTPD_LOG_LINE_PATTERN, httpLogLineRegex, HTTPD_DATETIME_PATTERN, httpDateTimeFormat, e.getMessage());
+        System.exit(ExitStatuses.CONFIG_FILE_PARSE_ERROR);
+    }
+
+    String httpRequestLineRegex = parsed.getProperty(HTTPD_REQUESTLINE_PATTERN);
+
+    if (httpRequestLineRegex == null) {
+      httpRequestLineRegex = "^(?<method>[^ ]+) /(static/)?(?<organizationid>[^/]+)/(?<publicationchannel>[^/]+)/(?<episodeid>[^/]+)/(?<assetid>[^/]+)/[^/ ]+ .+$";
+    }
+    Pattern httpRequestLinePattern = null;
+    try {
+        LOGGER.info("Using \"{}\" as pattern", httpRequestLineRegex);
+        httpRequestLinePattern = Pattern.compile(httpRequestLineRegex);
+        RequestLine.setRequestLineConfiguration(new RequestLineConfiguration(httpRequestLinePattern));
+    } catch (Exception e) {
+        LOGGER.error("Error parsing {} \"{}\": {}",  HTTPD_REQUESTLINE_PATTERN, httpRequestLinePattern, e.getMessage());
+        System.exit(ExitStatuses.CONFIG_FILE_PARSE_ERROR);
+    }
+
     Duration viewDuration = null;
     try {
       viewDuration = Duration.parse(parsed.getProperty(ADAPTER_VIEW_INTERVAL, "PT2H"));
@@ -178,7 +233,11 @@ public final class ConfigFile {
                           logConfigurationFile != null ? Paths.get(logConfigurationFile) : null,
                           propertySet(ADAPTER_INVALID_USER_AGENTS, parsed),
                           propertySet(ADAPTER_VALID_FILE_EXTENSIONS, parsed),
-                          propertySet(ADAPTER_INVALID_PUBLICATION_CHANNELS, parsed));
+                          propertySet(ADAPTER_INVALID_PUBLICATION_CHANNELS, parsed),
+                          httpLogLinePattern,
+                          httpRequestLinePattern,
+                          httpDateTimePattern
+                          );
   }
 
   public InfluxDBConfig getInfluxDBConfig() {
@@ -211,5 +270,17 @@ public final class ConfigFile {
 
   public Set<String> getInvalidPublicationChannels() {
     return this.invalidPublicationChannels;
+  }
+
+  public Pattern gethttpLogLinePattern() {
+    return httpLogLinePattern;
+  }
+
+  public Pattern getHttpRequestLinePattern() {
+    return httpRequestLinePattern;
+  }
+
+  public String getHttpDateTimePattern() {
+    return httpDateTimePattern;
   }
 }
