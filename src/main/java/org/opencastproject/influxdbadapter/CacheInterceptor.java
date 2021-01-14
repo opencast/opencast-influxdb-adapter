@@ -38,6 +38,11 @@ public class CacheInterceptor implements Interceptor {
 
   private int maxAge;
 
+  /**
+   * Create the interceptor
+   *
+   * @param maxAge Sets the maximum age of a cached response
+   */
   public CacheInterceptor(int maxAge) {
     this.maxAge = maxAge;
   }

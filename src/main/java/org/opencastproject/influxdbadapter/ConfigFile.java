@@ -175,7 +175,7 @@ public final class ConfigFile {
       cacheDir = new File(opencastCacheDir);
     }
 
-    long cacheSize = Long.valueOf(parsed.getProperty(OPENCAST_CACHE_SIZE,"10")) * 1024 * 1024;
+    long cacheSize = Long.valueOf(parsed.getProperty(OPENCAST_CACHE_SIZE,"50")) * 1024 * 1024;
 
     if (!opencastCacheExpirationDuration.isZero()) {
       LOGGER.info("Configured Opencast external API cache at \"{}\" with max size {} Byte", cacheDir, cacheSize);
