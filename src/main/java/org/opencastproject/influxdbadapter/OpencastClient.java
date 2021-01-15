@@ -21,17 +21,14 @@
 
 package org.opencastproject.influxdbadapter;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
-
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 import devcsrj.okhttp3.logging.HttpLoggingInterceptor;
 import io.reactivex.Flowable;
+import okhttp3.Cache;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.ResponseBody;
@@ -47,35 +44,10 @@ public final class OpencastClient {
 
   private static final String ORGANIZATION = "{organization}";
 
-  public static final class CacheKey {
-    private final String organizationId;
-    private final String episodeId;
-
-    public CacheKey(final String organizationId, final String episodeId) {
-      this.organizationId = organizationId;
-      this.episodeId = episodeId;
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-      if (this == o)
-        return true;
-      if (o == null || getClass() != o.getClass())
-        return false;
-      final CacheKey cacheKey = (CacheKey) o;
-      return this.organizationId.equals(cacheKey.organizationId) && this.episodeId.equals(cacheKey.episodeId);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(this.organizationId, this.episodeId);
-    }
-  }
 
   private final OpencastConfig opencastConfig;
   private final Map<String, OpencastExternalAPI> clients;
   private final OkHttpClient client;
-  private final Cache<CacheKey, Response<ResponseBody>> cache;
 
   /**
    * Create the client
@@ -86,10 +58,19 @@ public final class OpencastClient {
     this.opencastConfig = opencastConfig;
     this.clients = new HashMap<>();
     final Interceptor interceptor = new HttpLoggingInterceptor();
-    this.client = new OkHttpClient.Builder().addInterceptor(interceptor).build();
-    this.cache = opencastConfig != null && !opencastConfig.getCacheExpirationDuration().isZero() ?
-            CacheBuilder.newBuilder().expireAfterWrite(opencastConfig.getCacheExpirationDuration()).build() :
-            null;
+    if (!opencastConfig.getCacheExpirationDuration().isZero()) {
+      //with cache
+      Cache cache = new Cache(opencastConfig.getCacheDir(), opencastConfig.getCacheSize());
+      this.client = new OkHttpClient.Builder()
+            .addNetworkInterceptor(new CacheInterceptor((int)opencastConfig.getCacheExpirationDuration().toMinutes()))
+            .addInterceptor(interceptor)
+            .cache(cache)
+            .build();
+    } else {
+      this.client = new OkHttpClient.Builder()
+              .addNetworkInterceptor(new CacheInterceptor((int)opencastConfig.getCacheExpirationDuration().toMinutes()))
+              .build();
+    }
   }
 
   private String getRawAddress(final CharSequence organization) {
@@ -136,29 +117,6 @@ public final class OpencastClient {
    * @return A <code>Flowable</code> with the response body
    */
   public Flowable<Response<ResponseBody>> getRequest(final String organization, final String episodeId) {
-    final Flowable<Response<ResponseBody>> requestUncached = getRequestUncached(organization, episodeId);
-    if (this.cache == null)
-      return requestUncached;
-    final CacheKey cacheKey = new CacheKey(organization, episodeId);
-    return Flowable.concat(Util.nullableToFlowable(this.cache.getIfPresent(cacheKey)),
-                           requestUncached.doOnNext(response -> addToCache(cacheKey,
-                                                                           response,
-                                                                           organization,
-                                                                           episodeId)));
-  }
-
-  private void addToCache(
-          final CacheKey cacheKey,
-          final Response<ResponseBody> response,
-          final String organization,
-          final String episodeId) {
-    if (response.isSuccessful()) {
-      LOGGER.debug("OCCACHEADD, episode {}, organization {}", episodeId, organization);
-      this.cache.put(cacheKey, response);
-    }
-  }
-
-  private Flowable<Response<ResponseBody>> getRequestUncached(final String organization, final String episodeId) {
     LOGGER.debug("OCREQUESTSTART, episode {}, organization {}", episodeId, organization);
     return getClient(organization).getEvent(episodeId, getAuthHeader());
   }
