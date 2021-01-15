@@ -24,12 +24,9 @@ package org.opencastproject.influxdbadapter;
 import org.slf4j.LoggerFactory;
 
 import java.time.OffsetDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Collection;
-import java.util.Locale;
 import java.util.Optional;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import io.reactivex.Flowable;
 
@@ -46,12 +43,8 @@ import io.reactivex.Flowable;
 public final class LogLine {
   private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(LogLine.class);
 
-  private static final Pattern APACHE_LOG_LINE_PATTERN = Pattern.compile(
-          "^(?<ip>(?:[0-9]{1,3}\\.){3}[0-9]{1,3}) - - \\[(?<date>[^]]+)] \"(?<request>[^\"]*)\" (?<httpret>[0-9]+) (?<unknown1>(?:[0-9]+|-)) \"(?<referrer>[^\"]*)\" \"(?<agent>[^\"]+)\"");
+  private static LogLineConfiguration logLineConfiguration = null;
 
-  // Example: 10/Feb/2019:03:38:22 +0100
-  private static final DateTimeFormatter LOG_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd/MMM/yyyy:HH:mm:ss Z")
-                                                                               .withLocale(Locale.ENGLISH);
 
   private final CharSequence origin;
   private final String ip;
@@ -93,10 +86,13 @@ public final class LogLine {
    * @return An empty <code>Flowable</code> if the line was not successfully parsed, else a singleton <code>Flowable</code>
    */
   public static Flowable<LogLine> fromLine(final CharSequence line) {
+    if (logLineConfiguration == null) {
+      throw new ConfigurationException("Configuration not set. Abort.");
+    }
     if (line.length() == 0) {
       return Flowable.empty();
     }
-    final Matcher m = APACHE_LOG_LINE_PATTERN.matcher(line);
+    final Matcher m = logLineConfiguration.getPattern().matcher(line);
     if (!m.matches()) {
       LOGGER.debug("SKIP, wrong line pattern: {}", line);
       return Flowable.empty();
@@ -104,7 +100,7 @@ public final class LogLine {
     final String requestStr = m.group("request");
     return Flowable.just(new LogLine(line,
                                      m.group("ip"),
-                                     OffsetDateTime.parse(m.group("date"), LOG_TIME_FORMATTER),
+                                     OffsetDateTime.parse(m.group("date"), logLineConfiguration.getDateTimeFormatter()),
                                      requestStr,
                                      Integer.parseInt(m.group("httpret")),
                                      m.group("unknown1"),
@@ -150,6 +146,7 @@ public final class LogLine {
         LOGGER.debug("SKIP, invalid agent \"{}\": {}", this.agent, this.origin);
         return Flowable.empty();
       }
+      LOGGER.debug("TAKE: {}", this.origin);
       return Flowable.just(new RawImpression(
               this,
               rl.getEpisodeId(),
@@ -167,4 +164,17 @@ public final class LogLine {
   public CharSequence getOrigin() {
     return this.origin;
   }
+
+  public static void setLogLineConfiguration(LogLineConfiguration logLineConfiguration) {
+    LogLine.logLineConfiguration = logLineConfiguration;
+  }
+
+  public String getReferrer() {
+    return referrer;
+  }
+
+  public String getIp() {
+    return ip;
+  }
+
 }

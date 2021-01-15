@@ -48,6 +48,9 @@ import io.reactivex.Flowable;
 public final class Main {
   private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(Main.class);
 
+  private static ConfigFile configFile;
+
+
   private Main() {
   }
 
@@ -90,7 +93,7 @@ public final class Main {
   public static void main(final String[] args) {
     // Preliminaries: command line parsing, config file parsing
     final CommandLine commandLine = CommandLine.parse(args);
-    final ConfigFile configFile = ConfigFile.readFile(commandLine.getConfigFile());
+    configFile = ConfigFile.readFile(commandLine.getConfigFile());
     configureLog(configFile);
     LOGGER.info("Logging configured");
     // Connect and configure InfluxDB
@@ -200,6 +203,14 @@ public final class Main {
       LOGGER.error("Error:", e);
     }
     System.exit(ExitStatuses.UNKNOWN);
+  }
+
+  public static ConfigFile getConfigFile() {
+    return configFile;
+  }
+
+  public static void setConfigFile(ConfigFile configFile) {
+    Main.configFile = configFile;
   }
 
 }
